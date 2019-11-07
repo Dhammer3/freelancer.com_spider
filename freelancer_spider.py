@@ -2,11 +2,13 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 from tabulate import tabulate
+import time
+
 import re
 import json
 login_url='https://www.freelancer.com/login'
 info_url="https://www.freelancer.com/search/python/"
-
+df=pd.DataFrame()
 job_list=[]
 days_list=[]
 prices_list=[]
@@ -17,13 +19,17 @@ data=[]
 max_num_pages=6
 
 def check_jobs():
+    #iterate through each page
     for i in range(max_num_pages):
+        #get the page using requests
         r = requests.get(info_url+'/'+str(i))
+        #convert the html to an iterable BS4 object
         soup = BeautifulSoup(r.text, "lxml")
 
         # get the job postings
         jobs = soup.find_all("a", class_="JobSearchCard-primary-heading-link")
         for job in jobs:
+            #
             job=job.text
             job=job.strip()
             job=job.replace('\n','')
@@ -39,10 +45,11 @@ def check_jobs():
         # get the prices and bids
         prices = soup.find_all("div", class_="JobSearchCard-secondary")
         for price in prices:
+            #do some text processing
             price = price.text.replace("Avg Bid",'')
             price = price.replace("Bid now", '')
-            price=price.strip()
-            price=price.replace('\n','')
+            price = price.strip()
+            price = price.replace('\n','')
             price = price.replace('\t', '')
             price = price.strip('/n')
             #seperate the num bid from price and store them
@@ -68,10 +75,7 @@ def check_jobs():
         # get the description
         descriptions = soup.find_all("p", class_="JobSearchCard-primary-description")
         for description in descriptions:
-            description=description.text
-            description = description.strip()
-            #print(description)
-            #print("===================================")
+            description=description.text.strip()
             desc_list.append(description)
         for link in soup.find_all("a", class_="JobSearchCard-primary-heading-link"):
             link=link.get('href')
@@ -81,16 +85,17 @@ def check_jobs():
 
 
     #
+def update_df():
+    df = pd.DataFrame()
+    df['Job'],df['Price'],df['Days Until Expire'], df['# Bids'],df['Description'],df['link']=job_list,prices_list, days_list, numBids_list,desc_list,link_list
+    df=df.drop_duplicates()
+    df=df.sort_index(ascending=0)
+    print(tabulate(df, headers='keys',tablefmt='psql'))
 
-check_jobs()
+if __name__ == "__main__":
+    while(True):
+        check_jobs()
+        update_df()
+        time.sleep(40)
 
-#data=[job_list, prices_list, days_list, numBids_list, desc_list]
 
-df=pd.DataFrame()
-df['Job']=job_list
-df['Price']=prices_list
-df['Days Until Expire']=days_list
-df['# Bids']=numBids_list
-df['Description']=desc_list
-df['link']=link_list
-print(tabulate(df, headers='keys',tablefmt='psql'))
