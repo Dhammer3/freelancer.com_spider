@@ -3,19 +3,12 @@ import requests
 import pandas as pd
 from tabulate import tabulate
 import time
-
 import re
 import json
 login_url='https://www.freelancer.com/login'
 info_url="https://www.freelancer.com/search/python/"
 df=pd.DataFrame()
-job_list=[]
-days_list=[]
-prices_list=[]
-numBids_list=[]
-desc_list=[]
-link_list=[]
-data=[]
+job_list,days_list,prices_list,numBids_list,desc_list,link_list,data=[],[],[],[],[],[],[]
 max_num_pages=6
 
 def check_jobs():
